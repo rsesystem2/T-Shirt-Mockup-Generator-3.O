@@ -1,14 +1,10 @@
 import streamlit as st
-from packaging import version
 from PIL import Image
 import numpy as np
 import zipfile
 import io
 import cv2
 import os
-
-# --- Streamlit version detection ---
-st_version = version.parse(st.__version__)
 
 st.set_page_config(page_title="Shirt Mockup Generator", layout="centered")
 st.title("👕 Shirt Mockup Generator with Batching")
@@ -35,7 +31,7 @@ design_files = st.file_uploader("📌 Upload Design Images", type=["png", "jpg",
 shirt_files = st.file_uploader("🎨 Upload Shirt Templates", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 
 # --- Clear Button ---
-if st.button("🔄 Start Over (Clear Generated Mockups)") and st.session_state:
+if st.button("🔄 Start Over (Clear Generated Mockups)"):
     for key in ["design_files", "design_names", "zip_files_output"]:
         if key in st.session_state:
             del st.session_state[key]
@@ -47,7 +43,7 @@ if design_files:
     for i, file in enumerate(design_files):
         default_name = os.path.splitext(file.name)[0]
         custom_name = st.text_input(
-            f"Name for Design {i+1} ({file.name})",
+            f"Name for Design {i+1} ({file.name})", 
             value=st.session_state.design_names.get(file.name, default_name),
             key=f"name_input_{i}_{file.name}"
         )
@@ -60,8 +56,6 @@ if design_files:
     batch_start = st.number_input("Start from Design #", min_value=1, max_value=total_designs, value=1)
     batch_end = st.number_input("End at Design #", min_value=batch_start, max_value=total_designs, value=min(batch_start + 19, total_designs))
     selected_batch = design_files[batch_start - 1: batch_end]
-else:
-    selected_batch = []
 
 # --- Bounding Box Detection ---
 def get_shirt_bbox(pil_image):
@@ -108,13 +102,7 @@ if design_files and shirt_files:
 
         preview = shirt.copy()
         preview.paste(resized_design, (x, y), resized_design)
-
-        # Version-safe image display
-        if st_version >= version.parse("1.39.0"):
-            st.image(preview, caption="📸 Live Mockup Preview", use_container_width=True)
-        else:
-            st.image(preview, caption="📸 Live Mockup Preview", use_column_width=True)
-
+        st.image(preview, caption="📸 Live Mockup Preview", use_container_width=True)
     except Exception as e:
         st.error(f"⚠️ Preview failed: {e}")
 
